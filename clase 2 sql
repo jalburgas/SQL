@@ -1,0 +1,467 @@
+Consultas Avanzadas, Restricciones, UPDATE, DELETE y Relaciones
+Objetivos de la clase:
+1.	Dominar UPDATE (actualizar registros)
+2.	Dominar DELETE (eliminar registros)
+3.	Entender restricciones y su impacto en UPDATE/DELETE
+4.	Aprender relaciones entre tablas (INNER JOIN, LEFT JOIN)
+5.	Usar funciones de agregación y GROUP BY
+________________________________________
+1. Comandos UPDATE y DELETE (Fundamentales)
+UPDATE - Modificar datos existentes
+sql
+-- Sintaxis básica
+UPDATE nombre_tabla 
+SET columna1 = valor1, columna2 = valor2 
+WHERE condición;
+
+-- Ejemplos prácticos:
+USE empresa;
+
+-- Actualizar un solo campo
+UPDATE empleados 
+SET salario = 2750 
+WHERE cedula = '13312024';
+
+-- Actualizar múltiples campos
+UPDATE empleados 
+SET nombre = 'Juan Carlos Pérez', email = 'juancarlos@empresa.com'
+WHERE cedula = '13312024';
+
+-- Actualizar usando operadores matemáticos
+UPDATE empleados 
+SET salario = salario * 1.15  -- Aumento del 15%
+WHERE departamento_id = 2;
+
+-- Actualizar con subconsulta
+UPDATE empleados 
+SET salario = salario * 1.20
+WHERE departamento_id = (
+    SELECT id FROM departamentos WHERE nombre = 'Ventas'
+);
+
+-- Actualizar múltiples registros (cuidado sin WHERE)
+UPDATE empleados 
+SET fecha_ingreso = CURDATE() 
+WHERE fecha_ingreso IS NULL;
+
+-- Actualizar con JOIN (MySQL)
+UPDATE empleados e
+JOIN departamentos d ON e.departamento_id = d.id
+SET e.salario = e.salario * 1.10
+WHERE d.nombre = 'TI';
+DELETE - Eliminar registros
+sql
+-- Sintaxis básica
+DELETE FROM nombre_tabla WHERE condición;
+
+-- Ejemplos:
+-- Eliminar un empleado específico
+DELETE FROM empleados 
+WHERE cedula = '13312024';
+
+-- Eliminar con múltiples condiciones
+DELETE FROM empleados 
+WHERE salario < 2000 AND departamento_id = 3;
+
+-- Eliminar usando subconsulta
+DELETE FROM empleados 
+WHERE departamento_id = (
+    SELECT id FROM departamentos WHERE nombre = 'Recursos Humanos'
+);
+
+-- Eliminar con JOIN (MySQL)
+DELETE e 
+FROM empleados e
+JOIN departamentos d ON e.departamento_id = d.id
+WHERE d.nombre = 'Ventas' AND e.salario < 2500;
+
+-- ⚠️ PELIGRO: Eliminar TODOS los registros (sin WHERE)
+DELETE FROM empleados;  -- Borra todo, ¡cuidado!
+
+-- Alternativa segura: usar LIMIT
+DELETE FROM empleados 
+WHERE salario < 1500 
+LIMIT 5;  -- Elimina solo 5 registros
+TRUNCATE - Eliminar todos los registros RÁPIDO
+sql
+-- TRUNCATE vs DELETE:
+-- DELETE: Elimina uno por uno, se puede deshacer (ROLLBACK)
+-- TRUNCATE: Elimina toda la tabla de golpe, más rápido, NO se puede deshacer
+
+TRUNCATE TABLE empleados;  -- Borra todos los registros y reinicia AUTO_INCREMENT
+________________________________________
+2. Prácticas Seguras con UPDATE y DELETE
+⚠️ Siempre probar antes de ejecutar
+sql
+-- 1. Primero verifica qué vas a actualizar/eliminar
+SELECT * FROM empleados WHERE salario < 2000;
+
+-- 2. Si es correcto, ejecuta la acción
+DELETE FROM empleados WHERE salario < 2000;
+
+-- 3. Usar TRANSACCIONES para poder deshacer
+START TRANSACTION;
+UPDATE empleados SET salario = salario * 2 WHERE departamento_id = 1;
+-- Verifica el cambio
+SELECT * FROM empleados WHERE departamento_id = 1;
+-- Si está bien:
+COMMIT;
+-- Si está mal:
+ROLLBACK;
+Crear BACKUP antes de modificar
+sql
+-- Crear tabla respaldo
+CREATE TABLE empleados_backup AS SELECT * FROM empleados;
+
+-- O copiar solo algunos
+CREATE TABLE empleados_respaldo AS 
+SELECT * FROM empleados WHERE departamento_id = 1;
+
+-- Restaurar si es necesario
+INSERT INTO empleados SELECT * FROM empleados_backup;
+________________________________________
+3. Restricciones que Afectan UPDATE/DELETE
+FOREIGN KEY - Lo más importante
+sql
+-- Al crear tabla con FOREIGN KEY
+CREATE TABLE proyectos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100),
+    empleado_cedula VARCHAR(20),
+    FOREIGN KEY (empleado_cedula) REFERENCES empleados(cedula)
+    ON DELETE CASCADE  -- Opciones: CASCADE, SET NULL, RESTRICT, NO ACTION
+    ON UPDATE CASCADE
+);
+
+-- Opciones de FOREIGN KEY:
+-- CASCADE:    Si borras/actualizas el padre, se borra/actualiza el hijo
+-- SET NULL:   Si borras el padre, el hijo queda NULL
+-- RESTRICT:   No deja borrar si hay hijos relacionados (default en MySQL)
+-- NO ACTION:  Similar a RESTRICT
+
+-- Ejemplo práctico:
+CREATE TABLE pedidos (
+    id INT PRIMARY KEY,
+    cliente_id INT,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    ON DELETE RESTRICT  -- No deja eliminar cliente con pedidos
+);
+
+-- Ver restricciones existentes
+SHOW CREATE TABLE empleados;
+________________________________________
+4. Ejemplo Completo con UPDATE y DELETE
+sql
+-- Crear base de datos completa
+CREATE DATABASE tienda;
+USE tienda;
+
+-- Tabla categorías
+CREATE TABLE categorias (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    activa BOOLEAN DEFAULT TRUE
+);
+
+-- Tabla productos
+CREATE TABLE productos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    precio DECIMAL(10,2),
+    stock INT DEFAULT 0,
+    categoria_id INT,
+    FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+    ON DELETE SET NULL  -- Si borro categoría, productos quedan sin categoría
+    ON UPDATE CASCADE
+);
+
+-- Insertar datos
+INSERT INTO categorias (nombre) VALUES 
+('Electrónica'), ('Ropa'), ('Libros');
+
+INSERT INTO productos (nombre, precio, stock, categoria_id) VALUES
+('Laptop', 800, 10, 1),
+('Mouse', 25, 50, 1),
+('Camisa', 30, 100, 2),
+('Novela', 15, 30, 3);
+
+-- EJERCICIOS CON UPDATE
+-- 1. Aumentar precio 10% a todos
+UPDATE productos SET precio = precio * 1.10;
+
+-- 2. Descontar stock después de venta
+UPDATE productos 
+SET stock = stock - 5 
+WHERE nombre = 'Laptop';
+
+-- 3. Actualizar con JOIN
+UPDATE productos p
+JOIN categorias c ON p.categoria_id = c.id
+SET p.precio = p.precio * 0.85  -- 15% descuento
+WHERE c.nombre = 'Electrónica';
+
+-- EJERCICIOS CON DELETE
+-- 4. Eliminar productos sin stock
+DELETE FROM productos WHERE stock = 0;
+
+-- 5. Eliminar categoría (ver cómo afecta ON DELETE SET NULL)
+DELETE FROM categorias WHERE nombre = 'Ropa';
+-- Los productos de ropa ahora tienen categoria_id = NULL
+
+-- 6. Eliminar con subconsulta
+DELETE FROM productos 
+WHERE categoria_id IN (
+    SELECT id FROM categorias WHERE activa = FALSE
+);
+________________________________________
+5. Tabla Resumen - UPDATE y DELETE
+Comando	Sintaxis	Uso típico	Peligro
+UPDATE	UPDATE tabla SET col=valor WHERE condicion	Modificar datos existentes	⚠️ Sin WHERE actualiza TODOS
+DELETE	DELETE FROM tabla WHERE condicion	Eliminar registros específicos	⚠️ Sin WHERE borra TODOS
+TRUNCATE	TRUNCATE TABLE tabla	Vaciar tabla rápido	🔴 NO se puede deshacer
+START TRANSACTION	BEGIN; o START TRANSACTION;	Agrupar operaciones	Permite ROLLBACK
+________________________________________
+6. Ejercicios para Practicar UPDATE y DELETE
+Ejercicio 1: Actualizaciones
+sql
+-- En la tabla empleados:
+-- 1. Dar aumento del 20% a los que ganan menos de 2000
+-- 2. Cambiar el email de todos los del departamento TI a 'nombre@tecnologia.com'
+-- 3. Actualizar la fecha_ingreso a la fecha actual si es NULL
+Ejercicio 2: Eliminaciones seguras
+sql
+-- 1. Antes de eliminar, crear backup de empleados con salario < 1500
+-- 2. Eliminar empleados que no tienen email registrado
+-- 3. Usando transacción, eliminar departamento 'Recursos Humanos' 
+--    y decidir qué pasa con sus empleados
+Ejercicio 3: Cascada
+sql
+-- Crear tabla 'ventas' con FOREIGN KEY a 'productos'
+-- Configurar ON DELETE CASCADE
+-- Insertar algunas ventas
+-- Eliminar un producto y ver qué pasa
+________________________________________
+7. Comandos Útiles para Auditoría
+sql
+-- Ver cuántos registros serán afectados
+SELECT COUNT(*) FROM empleados WHERE salario < 2000;
+
+-- Ver qué se va a actualizar
+SELECT *, salario AS viejo_salario, salario*1.20 AS nuevo_salario
+FROM empleados WHERE salario < 2000;
+
+-- Ver registros antes de eliminar
+SELECT * FROM empleados WHERE fecha_ingreso < '2020-01-01';
+
+-- Ver dependencias antes de eliminar
+SELECT * FROM productos WHERE categoria_id = 1;
+________________________________________
+8. Buenas Prácticas para UPDATE/DELETE
+✅ Siempre usar WHERE
+✅ Probar con SELECT primero
+✅ Usar TRANSACCIONES
+✅ Hacer BACKUP antes
+✅ Limitar con LIMIT en DELETE
+✅ Documentar cambios importantes
+❌ Nunca ejecutar sin WHERE
+❌ No usar TRUNCATE sin estar seguro
+❌ No eliminar tablas con dependencias sin planificar
+________________________________________
+🎯 Proyecto Final de la Clase
+Crea un sistema simple de inventario:
+1.	Tablas: categorias, productos, movimientos_inventario
+2.	FOREIGN KEY con ON DELETE RESTRICT y ON UPDATE CASCADE
+3.	Insertar datos de ejemplo
+4.	Realizar operaciones:
+o	Aumentar precio 10% a cierta categoría
+o	Eliminar productos sin stock en los últimos 30 días
+o	Actualizar stock cuando se hace una venta
+o	Mover productos de una categoría a otra
+5.	Usar transacciones para actualizaciones masivas
+________________________________________
+¿Listo para la Clase 3? Podemos cubrir:
+•	Vistas (VIEWS)
+•	Procedimientos almacenados
+•	Triggers (automatizar UPDATE/DELETE)
+•	Usuarios y permisos
+¿Qué tema prefieres? 🚀
+
+ Consultas Avanzadas, Restricciones y Relaciones entre Tablas
+Objetivos de la clase:
+1.	Entender las restricciones (PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL)
+2.	Aprender a relacionar tablas (INNER JOIN, LEFT JOIN)
+3.	Usar funciones de agregación (COUNT, SUM, AVG, MAX, MIN)
+4.	Dominar GROUP BY y HAVING
+5.	Manejar subconsultas
+________________________________________
+1. Restricciones (Constraints)
+Cuando creas una tabla, puedes definir reglas para los datos:
+sql
+CREATE DATABASE empresa;
+USE empresa;
+
+-- Tabla con restricciones
+CREATE TABLE empleados (
+    cedula INT PRIMARY KEY,           -- No se repite ni es NULL
+    nombre VARCHAR(100) NOT NULL,     -- No puede estar vacío
+    email VARCHAR(100) UNIQUE,        -- No se puede repetir
+    salario DECIMAL(10,2) CHECK (salario > 0),  -- Validación
+    departamento_id INT,
+    fecha_ingreso DATE DEFAULT CURDATE()  -- Valor por defecto
+);
+
+CREATE TABLE departamentos (
+    id INT PRIMARY KEY AUTO_INCREMENT,  -- Auto numérico
+    nombre VARCHAR(50) NOT NULL
+);
+
+-- FOREIGN KEY: relación entre tablas
+ALTER TABLE empleados 
+ADD FOREIGN KEY (departamento_id) REFERENCES departamentos(id);
+________________________________________
+2. INSERTAR múltiples registros
+sql
+-- Departamentos
+INSERT INTO departamentos (nombre) VALUES 
+('Ventas'), ('TI'), ('Recursos Humanos');
+
+-- Empleados
+INSERT INTO empleados (cedula, nombre, email, salario, departamento_id) VALUES
+('13312024', 'Juan Pérez', 'juan@empresa.com', 2500, 2),
+('23456789', 'María Gómez', 'maria@empresa.com', 3000, 1),
+('34567890', 'Carlos López', 'carlos@empresa.com', 2800, 2),
+('45678901', 'Ana Martínez', 'ana@empresa.com', 2200, 3);
+________________________________________
+3. Consultas avanzadas
+WHERE con operadores lógicos
+sql
+-- Empleados con salario entre 2500 y 3000
+SELECT * FROM empleados 
+WHERE salario BETWEEN 2500 AND 3000;
+
+-- Empleados de TI o Ventas (usando IN)
+SELECT * FROM empleados 
+WHERE departamento_id IN (1, 2);
+
+-- Empleados cuyo nombre empiece con 'J' (usando LIKE)
+SELECT * FROM empleados 
+WHERE nombre LIKE 'J%';
+ORDER BY múltiple
+sql
+-- Ordenar por departamento ascendente y salario descendente
+SELECT * FROM empleados 
+ORDER BY departamento_id ASC, salario DESC;
+________________________________________
+4. Funciones de Agregación
+sql
+-- Contar empleados
+SELECT COUNT(*) AS total_empleados FROM empleados;
+
+-- Salario promedio por departamento
+SELECT departamento_id, AVG(salario) AS salario_promedio
+FROM empleados
+GROUP BY departamento_id;
+
+-- Salario máximo y mínimo
+SELECT MAX(salario) AS mayor_salario, MIN(salario) AS menor_salario
+FROM empleados;
+
+-- Suma total de salarios
+SELECT SUM(salario) AS total_nomina FROM empleados;
+________________________________________
+5. GROUP BY y HAVING
+sql
+-- Contar empleados por departamento (solo departamentos con más de 1 empleado)
+SELECT departamento_id, COUNT(*) AS cantidad
+FROM empleados
+GROUP BY departamento_id
+HAVING COUNT(*) > 1;
+________________________________________
+6. JOIN (Relacionar tablas)
+INNER JOIN (muestra solo coincidencias)
+sql
+SELECT e.cedula, e.nombre, e.salario, d.nombre AS departamento
+FROM empleados e
+INNER JOIN departamentos d ON e.departamento_id = d.id;
+LEFT JOIN (muestra todos los empleados, tengan o no departamento)
+sql
+SELECT e.nombre, d.nombre AS departamento
+FROM empleados e
+LEFT JOIN departamentos d ON e.departamento_id = d.id;
+________________________________________
+7. Subconsultas
+sql
+-- Empleados con salario superior al promedio
+SELECT nombre, salario
+FROM empleados
+WHERE salario > (SELECT AVG(salario) FROM empleados);
+
+-- Empleados del departamento con más empleados
+SELECT nombre, departamento_id
+FROM empleados
+WHERE departamento_id = (
+    SELECT departamento_id
+    FROM empleados
+    GROUP BY departamento_id
+    ORDER BY COUNT(*) DESC
+    LIMIT 1
+);
+________________________________________
+8. Actualización y eliminación avanzada
+sql
+-- Actualizar con condiciones
+UPDATE empleados 
+SET salario = salario * 1.10  -- Aumentar 10%
+WHERE departamento_id = 2;
+
+-- Eliminar con subconsulta
+DELETE FROM empleados 
+WHERE departamento_id = (SELECT id FROM departamentos WHERE nombre = 'Recursos Humanos');
+________________________________________
+9. ALTER TABLE (modificar estructura)
+sql
+-- Agregar columna
+ALTER TABLE empleados ADD COLUMN telefono VARCHAR(15);
+
+-- Modificar tipo de dato
+ALTER TABLE empleados MODIFY COLUMN salario DECIMAL(12,2);
+
+-- Eliminar columna
+ALTER TABLE empleados DROP COLUMN telefono;
+________________________________________
+🧪 Ejercicios prácticos para practicar
+Ejercicio 1
+Crea una tabla proyectos con:
+•	id (autoincremental, primary key)
+•	nombre (obligatorio, máximo 100 caracteres)
+•	presupuesto (decimal, mayor a 0)
+•	empleado_responsable (foreign key a empleados.cedula)
+Ejercicio 2
+Inserta 3 proyectos y asigna un empleado responsable a cada uno.
+Ejercicio 3
+Muestra todos los empleados y cuántos proyectos tienen asignados (aunque tengan 0 proyectos).
+Ejercicio 4
+Encuentra el departamento que más dinero gasta en salarios.
+________________________________________
+📝 Resumen de nuevos comandos
+Comando	Uso
+BETWEEN	Rango de valores
+LIKE	Búsqueda de patrones
+IN	Múltiples valores posibles
+JOIN	Unir tablas relacionadas
+GROUP BY	Agrupar resultados
+HAVING	Filtrar grupos
+COUNT(), SUM(), etc.	Funciones de agregación
+ALTER TABLE	Modificar estructura
+________________________________________
+🎯 Tarea para casa
+1.	Crea una base de datos biblioteca
+2.	Crea las tablas: autores, libros, prestamos
+3.	Relaciona las tablas con FOREIGN KEY
+4.	Inserta al menos 5 autores, 10 libros y 5 préstamos
+5.	Realiza consultas que usen:
+o	JOIN entre las 3 tablas
+o	GROUP BY para contar cuántos libros tiene cada autor
+o	Subconsulta para encontrar el libro más prestado
+¿Quieres que en la próxima clase veamos vistas, procedimientos almacenados o transacciones? ¡Tú eliges el camino! 🚀
+
