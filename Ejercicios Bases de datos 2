@@ -1,0 +1,250 @@
+🎯 Ejercicio 6: Gestión de Empleados y Proyectos
+
+Contexto: Empresa con empleados asignados a múltiples proyectos.
+
+Tablas:
+
+    empleados (id, nombre, apellido, email, fecha_contratacion, salario, id_departamento)
+
+    departamentos (id, nombre, presupuesto, id_director)
+
+    proyectos (id, nombre, presupuesto, fecha_inicio, fecha_fin)
+
+    asignaciones (id_empleado, id_proyecto, rol, horas_dedicadas, fecha_asignacion)
+
+    evaluaciones (id, id_empleado, fecha, puntuacion (1-10), comentarios)
+
+Requisitos:
+
+    Un empleado solo puede estar en un departamento, pero en múltiples proyectos
+
+    Un departamento tiene un director (que es empleado)
+
+    Restricción CHECK: salario >= 0 y horas_dedicadas BETWEEN 0 AND 200
+
+    Índice en apellido y email
+
+    Inserta: 3 deptos, 8 empleados, 4 proyectos, 10+ asignaciones
+
+    Consultas:
+
+        Empleados que trabajan en más de 2 proyectos
+
+        Proyecto con más horas dedicadas totales
+
+        Salario promedio por departamento
+
+🛒 Ejercicio 7: Inventario de Tienda con Categorías
+
+Contexto: Sistema de inventario con productos categorizados y proveedores.
+
+Tablas:
+
+    categorias (id, nombre, descripcion, id_categoria_padre)
+
+    proveedores (id, nombre, contacto, telefono, email, calificacion INT)
+
+    productos (id, nombre, descripcion, precio, stock_minimo, stock_actual, id_categoria, id_proveedor)
+
+    movimientos_inventario (id, id_producto, tipo ENUM('ENTRADA','SALIDA'), cantidad, fecha, motivo)
+
+    reordenes (id, id_producto, fecha_solicitud, cantidad, fecha_entrega_esperada, estado)
+
+Requisitos:
+
+    Autorelación en categorías (subcategorías tipo árbol)
+
+    Trigger: Cuando stock_actual < stock_minimo, insertar automáticamente en reordenes
+
+    Índice compuesto en (categoria, proveedor)
+
+    CHECK: precio > 0, stock_actual >= 0
+
+    Inserta datos de prueba
+
+    Consultas:
+
+        Productos con stock por debajo del mínimo
+
+        Proveedor con mejor calificación promedio
+
+        Jerarquía de categorías (mostrar subcategorías)
+
+🎓 Ejercicio 8: Sistema de Cursos Online (Moodle-like)
+
+Contexto: Plataforma de aprendizaje online con seguimiento de progreso.
+
+Tablas:
+
+    estudiantes (id, nombre, email, fecha_registro, nivel INT DEFAULT 1)
+
+    instructores (id, nombre, especialidad, bio)
+
+    cursos (id, titulo, descripcion, duracion_horas, nivel_requerido, id_instructor)
+
+    lecciones (id, id_curso, titulo, contenido, orden, duracion_minutos)
+
+    progreso (id_estudiante, id_leccion, completado BOOLEAN, fecha_completado, puntuacion INT)
+
+    certificados (id_estudiante, id_curso, fecha_emision, codigo_unico)
+
+Requisitos:
+
+    Un estudiante no puede tomar curso si su nivel < nivel_requerido
+
+    Progreso solo se marca completado si puntuacion >= 70
+
+    Llave primaria compuesta en progreso (estudiante, leccion)
+
+    Índice en email y codigo_unico
+
+    Inserta datos
+
+    Consultas:
+
+        Estudiantes con más del 80% de su curso completado
+
+        Lección más difícil (menor promedio de puntuación)
+
+        Instructores con más estudiantes certificados
+
+🏥 Ejercicio 9: Clínica Veterinaria
+
+Contexto: Sistema para administrar mascotas, dueños y citas veterinarias.
+
+Tablas:
+
+    dueños (id, nombre, telefono, direccion, email)
+
+    mascotas (id, nombre, especie, raza, fecha_nacimiento, peso DECIMAL(5,2), id_dueño)
+
+    veterinarios (id, nombre, especialidad, licencia)
+
+    consultas (id, id_mascota, id_veterinario, fecha, hora, sintomas, diagnostico)
+
+    tratamientos (id_consulta, medicamento, dosis, duracion_dias, instrucciones)
+
+    vacunas (id_mascota, nombre_vacuna, fecha_aplicacion, fecha_refuerzo, lote)
+
+Requisitos:
+
+    Relación: Una consulta puede tener múltiples tratamientos
+
+    CHECK: peso > 0, duracion_dias >= 1
+
+    Trigger: Al insertar vacuna, verificar que fecha_refuerzo > fecha_aplicacion
+
+    Vista: mascotas_mayores (mascotas con edad > 5 años)
+
+    Consultas:
+
+        Mascotas que han visitado al veterinario más de 3 veces
+
+        Veterinario con mayor número de consultas por especie
+
+        Dueños con mascotas sin vacunas al día
+
+🚗 Ejercicio 10: Concesionario de Autos
+
+Contexto: Gestión de ventas de autos, clientes y mantenimiento.
+
+Tablas:
+
+    clientes (id, nombre, documento, telefono, ciudad, categoria ENUM('BRONCE','PLATA','ORO'))
+
+    autos (id, marca, modelo, año, precio, id_tipo_combustible, disponible BOOLEAN)
+
+    tipos_combustible (id, nombre, precio_por_litro)
+
+    ventas (id, id_auto, id_cliente, fecha_venta, precio_final, metodo_pago)
+
+    mantenimientos (id, id_auto, fecha, tipo, costo, taller)
+
+    historial_clientes (id_cliente, fecha_interaccion, tipo_interaccion, notas)
+
+Requisitos:
+
+    Precio_final no puede ser > precio del auto
+
+    Un auto solo puede venderse si disponible = TRUE
+
+    Al vender un auto, automáticamente disponible pasa a FALSE (trigger)
+
+    Índice en marca, modelo y documento
+
+    Inserta datos de prueba
+
+    Consultas:
+
+        Autos más vendidos por marca y categoría de cliente
+
+        Clientes que han gastado más en mantenimientos que en compra de autos
+
+        Ganancia total considerando costo de combustible y mantenimiento
+
+📊 Ejemplo de código para el Ejercicio 6:
+sql
+
+CREATE DATABASE empresa;
+USE empresa;
+
+CREATE TABLE departamentos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    presupuesto DECIMAL(12,2) CHECK (presupuesto >= 0)
+);
+
+CREATE TABLE empleados (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    fecha_contratacion DATE,
+    salario DECIMAL(10,2) CHECK (salario >= 0),
+    id_departamento INT,
+    INDEX idx_apellido (apellido),
+    INDEX idx_email (email),
+    FOREIGN KEY (id_departamento) REFERENCES departamentos(id) ON DELETE SET NULL
+);
+
+CREATE TABLE proyectos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    presupuesto DECIMAL(12,2),
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    CHECK (fecha_fin >= fecha_inicio)
+);
+
+-- Añadir director después de empleados
+ALTER TABLE departamentos ADD COLUMN id_director INT;
+ALTER TABLE departamentos ADD FOREIGN KEY (id_director) REFERENCES empleados(id);
+
+CREATE TABLE asignaciones (
+    id_empleado INT,
+    id_proyecto INT,
+    rol VARCHAR(50),
+    horas_dedicadas INT CHECK (horas_dedicadas BETWEEN 0 AND 200),
+    fecha_asignacion DATE,
+    PRIMARY KEY (id_empleado, id_proyecto),
+    FOREIGN KEY (id_empleado) REFERENCES empleados(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id) ON DELETE CASCADE
+);
+
+-- Inserción de datos
+INSERT INTO departamentos (nombre, presupuesto) VALUES 
+('Ventas', 500000),
+('TI', 750000),
+('RRHH', 300000);
+
+INSERT INTO empleados (nombre, apellido, email, fecha_contratacion, salario, id_departamento) VALUES
+('Juan', 'Pérez', 'juan@empresa.com', '2020-01-15', 45000, 2),
+('María', 'Gómez', 'maria@empresa.com', '2019-03-20', 52000, 1);
+
+-- Consulta 1: Empleados en más de 2 proyectos
+SELECT e.nombre, e.apellido, COUNT(a.id_proyecto) as num_proyectos
+FROM empleados e
+JOIN asignaciones a ON e.id = a.id_empleado
+GROUP BY e.id
+HAVING num_proyectos > 2;
+
