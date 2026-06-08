@@ -1,0 +1,96 @@
+📌 1. Crear la base de datos
+sql
+
+CREATE DATABASE Nomina;
+USE Nomina;
+
+📌 2. Crear las tablas
+Tabla empleados
+sql
+
+CREATE TABLE empleados (
+    id_empleado INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    puesto VARCHAR(50),
+    salario_base DECIMAL(10,2)
+);
+
+Tabla departamentos
+sql
+
+CREATE TABLE departamentos (
+    id_departamento INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_departamento VARCHAR(50),
+    id_empleado INT,
+    FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado)
+);
+
+📌 3. Insertar datos de ejemplo
+sql
+
+INSERT INTO empleados (nombre, puesto, salario_base) VALUES
+('Ana López', 'Ingeniera de Software', 3500.00),
+('Carlos Ruiz', 'Analista de Datos', 2800.00),
+('Marta Gil', 'Gerente de Proyectos', 4200.00),
+('Luis Fernández', 'Desarrollador Web', 2500.00),
+('Sofía Martín', 'Diseñadora UX', 2900.00);
+
+INSERT INTO departamentos (nombre_departamento, id_empleado) VALUES
+('Tecnología', 1),
+('Tecnología', 3),
+('Datos', 2),
+('Diseño', 5);
+-- Nota: El empleado 4 (Luis) no está asignado a ningún departamento aún
+
+📌 4. Ejercicios con INNER JOIN
+🔹 Ejercicio 1: Listar empleados con su departamento
+sql
+
+SELECT empleados.nombre, empleados.puesto, departamentos.nombre_departamento
+FROM empleados
+INNER JOIN departamentos ON empleados.id_empleado = departamentos.id_empleado;
+
+Resultado esperado: Solo los empleados que tienen departamento asignado (Ana, Marta, Carlos, Sofía).
+Luis no aparece porque no tiene registro en departamentos.
+🔹 Ejercicio 2: Salario base por departamento
+sql
+
+SELECT departamentos.nombre_departamento, 
+       empleados.nombre, 
+       empleados.salario_base
+FROM departamentos
+INNER JOIN empleados ON departamentos.id_empleado = empleados.id_empleado
+ORDER BY departamentos.nombre_departamento;
+
+🔹 Ejercicio 3: Usar alias para simplificar
+sql
+
+SELECT e.nombre, e.puesto, d.nombre_departamento
+FROM empleados e
+INNER JOIN departamentos d ON e.id_empleado = d.id_empleado;
+
+🔹 Ejercicio 4: Contar cuántos empleados hay por departamento
+sql
+
+SELECT d.nombre_departamento, COUNT(e.id_empleado) AS total_empleados
+FROM departamentos d
+INNER JOIN empleados e ON d.id_empleado = e.id_empleado
+GROUP BY d.nombre_departamento;
+
+📌 5. Ejercicio adicional (para practicar)
+
+Enunciado: Muestra el nombre del empleado, su puesto, su salario base y el nombre del departamento solo para aquellos que ganen más de 3000.
+sql
+
+SELECT e.nombre, e.puesto, e.salario_base, d.nombre_departamento
+FROM empleados e
+INNER JOIN departamentos d ON e.id_empleado = d.id_empleado
+WHERE e.salario_base > 3000;
+
+✅ Comprobación rápida
+
+Puedes verificar qué empleados tienen departamento con:
+sql
+
+SELECT * FROM empleados;
+SELECT * FROM departamentos;
