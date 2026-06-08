@@ -1,0 +1,175 @@
+Ejercicio 1: Biblioteca
+
+Crea una BD para una biblioteca con:
+
+    libros (id, título, año, id_autor, id_editorial)
+
+    autores (id, nombre, nacionalidad)
+
+    editoriales (id, nombre, país)
+
+    préstamos (id, id_libro, fecha_prestamo, fecha_devolucion, nombre_solicitante)
+
+Requisitos:
+
+    PK y FK apropiadas
+
+    Añade índices en título y nombre_solicitante
+
+    Inserta al menos 3 autores, 2 editoriales, 5 libros y 3 préstamos
+
+    Consulta: Muestra título del libro, nombre del autor y fecha de préstamo
+
+Ejercicio 2: Tienda online
+
+Crea una BD para e-commerce con:
+
+    clientes (id, nombre, email, ciudad, fecha_registro)
+
+    pedidos (id, id_cliente, fecha, total)
+
+    productos (id, nombre, precio, stock)
+
+    lineas_pedido (id_pedido, id_producto, cantidad, precio_unitario)
+
+Requisitos:
+
+    Define claves compuestas si es necesario
+
+    Restricción CHECK para stock >= 0
+
+    Inserta datos de prueba (4 clientes, 6 productos, 3 pedidos con líneas)
+
+    Consulta: Lista clientes con el total gastado (suma de sus pedidos)
+
+Ejercicio 3: Universidad
+
+Crea una BD para gestión universitaria:
+
+    estudiantes (id, nombre, fecha_nac, id_departamento)
+
+    departamentos (id, nombre, edificio)
+
+    cursos (id, nombre, créditos, id_profesor)
+
+    profesores (id, nombre, id_departamento)
+
+    matrículas (id_estudiante, id_curso, año, semestre, nota)
+
+Requisitos:
+
+    Define todas las FK (incluyendo múltiples en matrículas)
+
+    Usa tipo DECIMAL(5,2) para nota
+
+    Inserta datos (2 deptos, 3 profesores, 4 cursos, 5 estudiantes, 8 matrículas)
+
+    Consulta: Obtén el promedio de notas por estudiante y por curso
+
+Ejercicio 4: Red social simplificada
+
+Crea BD con:
+
+    usuarios (id, username, email, fecha_registro)
+
+    posts (id, id_usuario, contenido, fecha, likes)
+
+    comentarios (id, id_post, id_usuario, texto, fecha)
+
+    seguidores (id_usuario_seguidor, id_usuario_seguido, fecha_inicio)
+
+Requisitos:
+
+    Relación muchos a muchos en seguidores (autoreferencia)
+
+    Borrado en cascada: si borras usuario, borra sus posts y comentarios
+
+    Inserta datos (mínimo 4 usuarios, 6 posts, 10 comentarios)
+
+    Consulta: Muestra cada post con número de comentarios y nombre del autor
+
+Ejercicio 5: Hospital
+
+Crea BD para hospital con:
+
+    pacientes (id, nombre, fecha_nac, dirección)
+
+    médicos (id, nombre, especialidad, teléfono)
+
+    citas (id, id_paciente, id_médico, fecha, hora, motivo)
+
+    recetas (id, id_cita, medicamento, dosis, instrucciones)
+
+    diagnósticos (id_cita, enfermedad, severidad)
+
+Requisitos:
+
+    Relación 1:1 entre cita y diagnóstico (opcional)
+
+    Una cita puede tener varias recetas
+
+    Inserta datos y escribe consultas como:
+
+        Médico con más citas
+
+        Pacientes con diagnóstico "Hipertensión"
+
+Ejemplo de código (Ejercicio 1)
+sql
+
+CREATE DATABASE biblioteca;
+USE biblioteca;
+
+CREATE TABLE autores (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    nacionalidad VARCHAR(50)
+);
+
+CREATE TABLE editoriales (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100),
+    pais VARCHAR(50)
+);
+
+CREATE TABLE libros (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    titulo VARCHAR(200) NOT NULL,
+    año YEAR,
+    id_autor INT,
+    id_editorial INT,
+    FOREIGN KEY (id_autor) REFERENCES autores(id),
+    FOREIGN KEY (id_editorial) REFERENCES editoriales(id),
+    INDEX idx_titulo (titulo)
+);
+
+CREATE TABLE prestamos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_libro INT,
+    fecha_prestamo DATE,
+    fecha_devolucion DATE,
+    nombre_solicitante VARCHAR(100),
+    FOREIGN KEY (id_libro) REFERENCES libros(id),
+    INDEX idx_solicitante (nombre_solicitante)
+);
+
+-- Inserciones
+INSERT INTO autores (nombre, nacionalidad) VALUES 
+('Gabriel García Márquez', 'Colombiana'),
+('J.K. Rowling', 'Británica'),
+('Isabel Allende', 'Chilena');
+
+INSERT INTO editoriales (nombre, pais) VALUES 
+('Alfaguara', 'España'),
+('Salamandra', 'España');
+
+INSERT INTO libros (titulo, año, id_autor, id_editorial) VALUES 
+('Cien años de soledad', 1967, 1, 1),
+('Harry Potter y la piedra filosofal', 1997, 2, 2),
+('La casa de los espíritus', 1982, 3, 1);
+
+-- Consulta solicitada
+SELECT l.titulo, a.nombre AS autor, p.fecha_prestamo
+FROM prestamos p
+JOIN libros l ON p.id_libro = l.id
+JOIN autores a ON l.id_autor = a.id;
