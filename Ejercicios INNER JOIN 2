@@ -1,0 +1,252 @@
+ Creación de la Base de Datos
+sql
+
+-- Crear base de datos
+CREATE DATABASE IF NOT EXISTS ventas_db;
+USE ventas_db;
+
+-- Tabla 1: Clientes
+CREATE TABLE clientes (
+    id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50),
+    apellido VARCHAR(50),
+    email VARCHAR(100),
+    ciudad VARCHAR(50)
+);
+
+-- Tabla 2: Productos
+CREATE TABLE productos (
+    id_producto INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_producto VARCHAR(100),
+    categoria VARCHAR(50),
+    precio DECIMAL(10,2),
+    stock INT
+);
+
+-- Tabla 3: Vendedores
+CREATE TABLE vendedores (
+    id_vendedor INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_vendedor VARCHAR(50),
+    apellido_vendedor VARCHAR(50),
+    departamento VARCHAR(50)
+);
+
+-- Tabla 4: Ventas (tabla de hechos)
+CREATE TABLE ventas (
+    id_venta INT PRIMARY KEY AUTO_INCREMENT,
+    id_cliente INT,
+    id_producto INT,
+    id_vendedor INT,
+    fecha_venta DATE,
+    cantidad INT,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+    FOREIGN KEY (id_vendedor) REFERENCES vendedores(id_vendedor)
+);
+
+📝 Insertar Datos de Prueba
+sql
+
+-- Insertar clientes
+INSERT INTO clientes (nombre, apellido, email, ciudad) VALUES
+('Juan', 'Perez', 'juan@email.com', 'Madrid'),
+('Maria', 'Gomez', 'maria@email.com', 'Barcelona'),
+('Carlos', 'Lopez', 'carlos@email.com', 'Valencia'),
+('Ana', 'Martinez', 'ana@email.com', 'Madrid'),
+('Luis', 'Rodriguez', 'luis@email.com', 'Sevilla');
+
+-- Insertar productos
+INSERT INTO productos (nombre_producto, categoria, precio, stock) VALUES
+('Laptop', 'Electrónica', 800.00, 10),
+('Mouse', 'Electrónica', 25.00, 50),
+('Silla', 'Muebles', 150.00, 20),
+('Mesa', 'Muebles', 300.00, 5),
+('Cuaderno', 'Papelería', 3.00, 100);
+
+-- Insertar vendedores
+INSERT INTO vendedores (nombre_vendedor, apellido_vendedor, departamento) VALUES
+('Pedro', 'Sanchez', 'Electrónica'),
+('Laura', 'Fernandez', 'Muebles'),
+('Diego', 'Ruiz', 'Papelería'),
+('Sofia', 'Torres', 'Electrónica');
+
+-- Insertar ventas
+INSERT INTO ventas (id_cliente, id_producto, id_vendedor, fecha_venta, cantidad) VALUES
+(1, 1, 1, '2024-01-15', 1),
+(1, 2, 1, '2024-01-15', 2),
+(2, 3, 2, '2024-01-20', 1),
+(3, 4, 2, '2024-02-01', 1),
+(4, 1, 4, '2024-02-10', 1),
+(2, 5, 3, '2024-02-15', 5),
+(5, 2, 1, '2024-02-20', 3),
+(3, 3, 2, '2024-03-01', 2),
+(1, 4, 2, '2024-03-05', 1),
+(4, 5, 3, '2024-03-10', 10);
+
+🎯 Ejercicios de INNER JOIN con 2, 3 y 4 tablas
+Ejercicio 1: JOIN de 2 tablas
+
+Obtener todas las ventas con nombre del cliente y producto:
+sql
+
+-- Solución
+SELECT v.id_venta, c.nombre, p.nombre_producto, v.cantidad, v.fecha_venta
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto;
+
+Ejercicio 2: JOIN de 3 tablas
+
+Mostrar ventas con cliente, producto y vendedor:
+sql
+
+-- Solución
+SELECT v.id_venta, 
+       CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+       p.nombre_producto,
+       CONCAT(vd.nombre_vendedor, ' ', vd.apellido_vendedor) AS vendedor,
+       v.cantidad,
+       (p.precio * v.cantidad) AS total
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN vendedores vd ON v.id_vendedor = vd.id_vendedor;
+
+Ejercicio 3: JOIN con filtro de ciudad
+
+Mostrar ventas solo de clientes de Madrid con detalles completos:
+sql
+
+-- Solución
+SELECT v.id_venta, 
+       c.nombre, 
+       c.ciudad,
+       p.nombre_producto,
+       p.categoria,
+       vd.nombre_vendedor,
+       v.cantidad
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN vendedores vd ON v.id_vendedor = vd.id_vendedor
+WHERE c.ciudad = 'Madrid';
+
+Ejercicio 4: JOIN con cálculo de total por venta
+
+Mostrar cada venta con total en dólares y categoría del producto:
+sql
+
+-- Solución
+SELECT v.id_venta,
+       CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+       p.nombre_producto,
+       p.categoria,
+       v.cantidad,
+       p.precio,
+       (p.precio * v.cantidad) AS monto_total,
+       CONCAT(vd.nombre_vendedor, ' ', vd.apellido_vendedor) AS vendedor,
+       vd.departamento
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN vendedores vd ON v.id_vendedor = vd.id_vendedor
+ORDER BY monto_total DESC;
+
+Ejercicio 5: JOIN con agregación (GROUP BY)
+
+Total de ventas por cliente, mostrando cuánto gastó cada uno:
+sql
+
+-- Solución
+SELECT CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+       c.ciudad,
+       COUNT(v.id_venta) AS num_compras,
+       SUM(p.precio * v.cantidad) AS total_gastado,
+       AVG(p.precio * v.cantidad) AS promedio_por_compra
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+GROUP BY c.id_cliente, c.nombre, c.apellido, c.ciudad
+ORDER BY total_gastado DESC;
+
+Ejercicio 6: JOIN con múltiples condiciones
+
+Ventas de Electrónica realizadas por vendedores del departamento de Electrónica:
+sql
+
+-- Solución
+SELECT v.id_venta,
+       CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+       p.nombre_producto,
+       p.categoria,
+       CONCAT(vd.nombre_vendedor, ' ', vd.apellido_vendedor) AS vendedor,
+       vd.departamento,
+       v.fecha_venta
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN vendedores vd ON v.id_vendedor = vd.id_vendedor
+WHERE p.categoria = 'Electrónica' 
+  AND vd.departamento = 'Electrónica';
+
+Ejercicio 7: JOIN con rango de fechas
+
+Ventas entre enero y febrero de 2024 con todos los detalles:
+sql
+
+-- Solución
+SELECT v.id_venta,
+       v.fecha_venta,
+       CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+       p.nombre_producto,
+       CONCAT(vd.nombre_vendedor, ' ', vd.apellido_vendedor) AS vendedor,
+       v.cantidad,
+       (p.precio * v.cantidad) AS total
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN vendedores vd ON v.id_vendedor = vd.id_vendedor
+WHERE v.fecha_venta BETWEEN '2024-01-01' AND '2024-02-29'
+ORDER BY v.fecha_venta;
+
+Ejercicio 8: JOIN con HAVING (filtro sobre agregación)
+
+Mostrar clientes que hayan comprado más de 2 productos en total:
+sql
+
+-- Solución
+SELECT CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+       COUNT(v.id_venta) AS numero_ventas,
+       SUM(v.cantidad) AS total_productos,
+       SUM(p.precio * v.cantidad) AS total_gastado
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+GROUP BY c.id_cliente, c.nombre, c.apellido
+HAVING SUM(v.cantidad) > 2;
+
+🏆 Ejercicio Bonus (4 tablas + subconsulta)
+
+Encontrar el producto más vendido (por cantidad) y mostrar quién lo compró y quién lo vendió:
+sql
+
+-- Solución
+SELECT p.nombre_producto,
+       SUM(v.cantidad) AS total_vendido,
+       CONCAT(c.nombre, ' ', c.apellido) AS comprador,
+       CONCAT(vd.nombre_vendedor, ' ', vd.apellido_vendedor) AS vendedor,
+       COUNT(v.id_venta) AS numero_transacciones
+FROM ventas v
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN vendedores vd ON v.id_vendedor = vd.id_vendedor
+GROUP BY p.id_producto, p.nombre_producto, c.id_cliente, c.nombre, c.apellido, 
+         vd.id_vendedor, vd.nombre_vendedor, vd.apellido_vendedor
+HAVING total_vendido = (
+    SELECT MAX(total_vendido)
+    FROM (
+        SELECT SUM(cantidad) AS total_vendido
+        FROM ventas
+        GROUP BY id_producto
+    ) AS subquery
+);
