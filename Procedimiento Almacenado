@@ -1,0 +1,108 @@
+Crear un procedimiento almacenado en XAMPP es un proceso muy visual y práctico si usas phpMyAdmin. Aquí te explico las dos maneras más comunes de hacerlo.
+🖱️ Método 1: Usando la Interfaz Gráfica de phpMyAdmin (El más sencillo)
+
+Esta es la forma más recomendada si estás empezando, ya que no necesitas recordar toda la sintaxis.
+
+    Abre phpMyAdmin: En tu navegador, ve a http://localhost/phpmyadmin.
+
+    Selecciona tu Base de Datos: En el panel izquierdo, haz clic en la base de datos donde quieres crear el procedimiento.
+
+    Ve a la pestaña "Rutinas": Una vez dentro de la base de datos, verás una serie de pestañas como "Estructura", "SQL", "Buscar". Haz clic en la que dice "Rutinas" (o "Procedimientos almacenados" en algunas versiones) .
+
+    Haz clic en "Agregar rutina": Verás un enlace o botón para añadir una nueva rutina .
+
+    Rellena el formulario:
+
+        Nombre: El nombre que le darás a tu procedimiento (ej: uspGetDeptStats).
+
+        Tipo: Elige PROCEDURE .
+
+        Parámetros: Aquí defines qué datos entrarán. Por ejemplo, si quieres buscar por nombre de departamento:
+
+            Nombre: deptName
+
+            Dirección: IN (es el valor de entrada)
+
+            Tipo: VARCHAR y su longitud, como 15 .
+            (Puedes hacer clic en "Añadir parámetro" si necesitas más de uno).
+
+        Definidor: Normalmente, se deja como root@localhost .
+
+        Definición: Aquí va la lógica en SQL. Debe ir dentro de un bloque BEGIN ... END . Por ejemplo:
+        sql
+
+        BEGIN
+            SELECT * FROM tu_tabla WHERE columna = deptName;
+        END
+
+    Guarda: Haz clic en "Continuar" o "Guardar" y tu procedimiento estará listo .
+
+⌨️ Método 2: Usando la pestaña SQL (La forma manual)
+
+Si prefieres escribir el código directamente o estás siguiendo un tutorial, este método es más rápido.
+
+    En phpMyAdmin, haz clic en la base de datos que vas a usar.
+
+    Ve a la pestaña "SQL" .
+
+    Escribe tu código SQL para crear el procedimiento. La estructura básica es la siguiente :
+    sql
+
+    -- 1. Eliminar el procedimiento si ya existe (para evitar errores)
+    DROP PROCEDURE IF EXISTS `mi_primer_procedimiento`;
+
+    -- 2. Cambiar el delimitador temporalmente para que MySQL no intente ejecutar el código línea por línea
+    DELIMITER //
+
+    -- 3. Crear el procedimiento
+    CREATE PROCEDURE `mi_primer_procedimiento`(
+        IN `nombre_buscar` VARCHAR(100)  -- Parámetro de entrada
+    )
+    BEGIN
+        -- Aquí va la lógica de tu procedimiento
+        SELECT * FROM usuarios WHERE nombre = nombre_buscar;
+    END //
+
+    -- 4. Restaurar el delimitador original
+    DELIMITER ;
+
+        Nota sobre DELIMITER: Este comando es muy importante en phpMyAdmin. Le dice a la base de datos que no ejecute el código hasta que encuentre // en lugar de ;. Así puedes usar ; dentro del procedimiento sin problemas .
+
+    Haz clic en "Continuar" o en el botón "Ejecutar" para crear el procedimiento.
+
+▶️ Cómo Ejecutar tu Procedimiento Almacenado
+
+Una vez creado, tienes dos formas de probarlo:
+
+    Opción A (Visual): Ve otra vez a la pestaña "Rutinas" y haz clic en "Ejecutar" en la fila de tu procedimiento. Te pedirá los valores de los parámetros y te mostrará el resultado .
+
+    Opción B (Código SQL): Ve a la pestaña "SQL" y ejecuta el comando CALL. Por ejemplo:
+    sql
+
+    CALL mi_primer_procedimiento('Juan Perez');
+
+💡 Un Ejemplo Práctico y Real
+
+Imaginemos que tienes una tabla llamada empleados y quieres buscar por ID. Tu procedimiento se vería así :
+sql
+
+DROP PROCEDURE IF EXISTS `uspGetEmployee`;
+DELIMITER //
+CREATE PROCEDURE `uspGetEmployee`(IN `empId` INT)
+BEGIN
+    -- Declaramos una variable para el resultado
+    DECLARE employeeName VARCHAR(100);
+
+    -- Buscamos el nombre en la tabla
+    SELECT CONCAT(first_name, ' ', last_name) INTO employeeName
+    FROM employees
+    WHERE id = empId;
+
+    -- Mostramos el resultado o un mensaje de error
+    IF employeeName IS NULL THEN
+        SELECT 'Empleado no encontrado' AS Resultado;
+    ELSE
+        SELECT employeeName AS Resultado;
+    END IF;
+END //
+DELIMITER ;
