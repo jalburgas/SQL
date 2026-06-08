@@ -1,0 +1,127 @@
+
+📚 Ejercicios MySQL: Base de datos, tablas e INNER JOIN
+🏗️ Ejercicio 1: Crear la base de datos
+sql
+
+CREATE DATABASE biblioteca;
+USE biblioteca;
+
+📄 Ejercicio 2: Crear las tablas
+sql
+
+-- Tabla autores
+CREATE TABLE autores (
+    id_autor INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    nacionalidad VARCHAR(30)
+);
+
+-- Tabla libros
+CREATE TABLE libros (
+    id_libro INT PRIMARY KEY AUTO_INCREMENT,
+    titulo VARCHAR(100) NOT NULL,
+    anio_publicacion INT,
+    id_autor INT,
+    FOREIGN KEY (id_autor) REFERENCES autores(id_autor)
+);
+
+-- Tabla prestamos
+CREATE TABLE prestamos (
+    id_prestamo INT PRIMARY KEY AUTO_INCREMENT,
+    id_libro INT,
+    fecha_prestamo DATE,
+    fecha_devolucion DATE,
+    FOREIGN KEY (id_libro) REFERENCES libros(id_libro)
+);
+
+📝 Ejercicio 3: Insertar datos de ejemplo
+sql
+
+INSERT INTO autores (nombre, nacionalidad) VALUES
+('Gabriel García Márquez', 'Colombiana'),
+('Julio Cortázar', 'Argentina'),
+('Isabel Allende', 'Chilena'),
+('Mario Vargas Llosa', 'Peruana');
+
+INSERT INTO libros (titulo, anio_publicacion, id_autor) VALUES
+('Cien años de soledad', 1967, 1),
+('Rayuela', 1963, 2),
+('La casa de los espíritus', 1982, 3),
+('La ciudad y los perros', 1963, 4),
+('El amor en los tiempos del cólera', 1985, 1);
+
+INSERT INTO prestamos (id_libro, fecha_prestamo, fecha_devolucion) VALUES
+(1, '2024-03-01', '2024-03-15'),
+(2, '2024-03-05', NULL),
+(3, '2024-03-10', '2024-03-20'),
+(1, '2024-03-12', NULL);
+
+🔗 Ejercicios con INNER JOIN
+🧠 Ejercicio 4: Mostrar cada libro con su autor
+sql
+
+SELECT libros.titulo, autores.nombre AS autor
+FROM libros
+INNER JOIN autores ON libros.id_autor = autores.id_autor;
+
+🧠 Ejercicio 5: Mostrar préstamos con título del libro
+sql
+
+SELECT prestamos.id_prestamo, libros.titulo, prestamos.fecha_prestamo
+FROM prestamos
+INNER JOIN libros ON prestamos.id_libro = libros.id_libro;
+
+🧠 Ejercicio 6: Título del libro, autor y fecha de préstamo
+sql
+
+SELECT libros.titulo, autores.nombre AS autor, prestamos.fecha_prestamo
+FROM prestamos
+INNER JOIN libros ON prestamos.id_libro = libros.id_libro
+INNER JOIN autores ON libros.id_autor = autores.id_autor;
+
+🧠 Ejercicio 7: Préstamos activos (fecha_devolucion NULL)
+sql
+
+SELECT libros.titulo, autores.nombre, prestamos.fecha_prestamo
+FROM prestamos
+INNER JOIN libros ON prestamos.id_libro = libros.id_libro
+INNER JOIN autores ON libros.id_autor = autores.id_autor
+WHERE prestamos.fecha_devolucion IS NULL;
+
+🧠 Ejercicio 8: Libros publicados después de 1970 con su autor
+sql
+
+SELECT libros.titulo, libros.anio_publicacion, autores.nombre
+FROM libros
+INNER JOIN autores ON libros.id_autor = autores.id_autor
+WHERE libros.anio_publicacion > 1970;
+
+⚠️ Ejercicio 9: Intentar INNER JOIN con condición falsa
+
+¿Qué pasa si hacemos esto? (Libros con autores de nacionalidad 'Mexicana' → ninguna coincide)
+sql
+
+SELECT libros.titulo, autores.nombre
+FROM libros
+INNER JOIN autores ON libros.id_autor = autores.id_autor
+WHERE autores.nacionalidad = 'Mexicana';
+
+Resultado: vacío (porque no hay coincidencias).
+🧪 Ejercicio 10: Crear tu propia consulta
+
+Enunciado: Muestra el título del libro, el nombre del autor y la fecha de préstamo solo para los libros prestados después del 1 de marzo de 2024.
+<details> <summary>Ver solución</summary>
+sql
+
+SELECT libros.titulo, autores.nombre, prestamos.fecha_prestamo
+FROM prestamos
+INNER JOIN libros ON prestamos.id_libro = libros.id_libro
+INNER JOIN autores ON libros.id_autor = autores.id_autor
+WHERE prestamos.fecha_prestamo > '2024-03-01';
+
+</details>
+🧹 Ejercicio 11: Limpiar (opcional)
+sql
+
+DROP DATABASE biblioteca;
+
