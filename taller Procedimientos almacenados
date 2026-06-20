@@ -1,0 +1,169 @@
+Taller Práctico: Sistema de Gestión de Ventas en MySQL
+🎯 Objetivos del Taller
+
+Al finalizar este taller, el alumno será capaz de:
+
+    Diseñar e implementar tablas con llaves primarias (PRIMARY KEY) y foráneas/secundarias (FOREIGN KEY).
+
+    Insertar, actualizar y eliminar registros de forma correcta respetando la integridad referencial.
+
+    Crear procedimientos almacenados (STORED PROCEDURES) para automatizar consultas complejas utilizando INNER JOIN.
+
+🏢 Caso de Estudio: "La Tiendita Tecnológica"
+
+Se requiere diseñar una base de datos básica para gestionar las ventas de una tienda. El sistema debe constar de tres entidades principales: Clientes, Productos y Ventas.
+🛠️ Fase 1: Creación de la Base de Datos y Estructura (DDL)
+
+El alumno deberá crear la base de datos llamada taller_ventas y definir las tres tablas con sus respectivas restricciones de integridad.
+
+    💡 Nota para el alumno: Presta atención al orden de creación de las tablas. No puedes crear una tabla con una llave foránea si la tabla a la que hace referencia aún no existe.
+
+SQL
+
+-- 1. Crear y usar la base de datos
+CREATE DATABASE taller_ventas;
+USE taller_ventas;
+
+-- 2. Crear Tabla Clientes
+CREATE TABLE clientes (
+    cliente_id INT AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) UNIQUE,
+    telefono VARCHAR(20),
+    CONSTRAINT pk_clientes PRIMARY KEY (cliente_id)
+);
+
+-- 3. Crear Tabla Productos
+CREATE TABLE productos (
+    producto_id INT AUTO_INCREMENT,
+    nombre_producto VARCHAR(100) NOT NULL,
+    precio DECIMAL(10, 2) NOT NULL,
+    stock INT NOT NULL,
+    CONSTRAINT pk_productos PRIMARY KEY (producto_id)
+);
+
+-- 4. Crear Tabla Ventas (Relaciona Clientes y Productos)
+CREATE TABLE ventas (
+    venta_id INT AUTO_INCREMENT,
+    cliente_id INT,
+    producto_id INT,
+    cantidad INT NOT NULL,
+    fecha_venta DATE NOT NULL,
+    CONSTRAINT pk_ventas PRIMARY KEY (venta_id),
+    CONSTRAINT fk_ventas_clientes FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id),
+    CONSTRAINT fk_ventas_productos FOREIGN KEY (producto_id) REFERENCES productos(producto_id)
+);
+
+📥 Fase 2: Manipulación de Datos (DML)
+Ejercicio 2.1: Inserción de Registros (INSERT)
+
+El alumno deberá poblar las tablas con al menos 3 registros en cada una para poder realizar las pruebas.
+SQL
+
+-- Insertar datos en Clientes
+INSERT INTO clientes (nombre, correo, telefono) VALUES
+('Carlos Mendoza', 'carlos@mail.com', '555-1234'),
+('Ana Rodriguez', 'ana@mail.com', '555-5678'),
+('Luis Peña', 'luis@mail.com', '555-9012');
+
+-- Insertar datos en Productos
+INSERT INTO productos (nombre_producto, precio, stock) VALUES
+('Laptop HP', 750.00, 10),
+('Mouse Logi', 25.00, 50),
+('Monitor Asus 24"', 180.00, 15);
+
+-- Insertar datos en Ventas (Respetando los IDs existentes)
+INSERT INTO ventas (cliente_id, producto_id, cantidad, fecha_venta) VALUES
+(1, 1, 1, '2026-06-15'), -- Carlos compra una Laptop
+(2, 2, 2, '2026-06-16'), -- Ana compra dos Mouses
+(1, 3, 1, '2026-06-17'); -- Carlos compra un Monitor
+
+Ejercicio 2.2: Actualización de Registros (UPDATE)
+
+Modificar los datos de un producto y de un cliente específico.
+SQL
+
+-- Escenario: El monitor subió de precio y Ana cambió de teléfono
+UPDATE productos 
+SET precio = 195.00 
+WHERE producto_id = 3;
+
+UPDATE clientes 
+SET telefono = '555-0000' 
+WHERE cliente_id = 2;
+
+Ejercicio 2.3: Borrado de Registros (DELETE)
+
+Eliminar un registro específico.
+SQL
+
+-- Escenario: El cliente Luis Peña no ha realizado compras y se desea eliminar de la base de datos
+DELETE FROM clientes 
+WHERE cliente_id = 3;
+
+    ⚠️ Pregunta de reflexión para el alumno: ¿Qué sucedería si intentas borrar al cliente_id = 1? ¿Por qué la base de datos lo impide?
+
+⚙️ Fase 3: Automatización con Procedimientos Almacenados
+
+El alumno deberá implementar procedimientos almacenados para encapsular la lógica de las consultas utilizando uniones internas (INNER JOIN).
+Procedimiento 1: Obtener el historial completo de ventas
+
+Este procedimiento debe cruzar las tres tablas para mostrar el nombre del cliente, el producto que compró, la cantidad y el total de la venta de forma legible.
+SQL
+
+DELIMITER //
+
+CREATE PROCEDURE sp_HistorialVentas()
+BEGIN
+    SELECT 
+        v.venta_id,
+        c.nombre AS Nombre_Cliente,
+        p.nombre_producto AS Producto,
+        v.cantidad AS Cantidad,
+        p.precio AS Precio_Unitario,
+        (v.cantidad * p.precio) AS Total_Pagar,
+        v.fecha_venta AS Fecha
+    FROM ventas v
+    INNER JOIN clientes c ON v.cliente_id = c.cliente_id
+    INNER JOIN productos p ON v.producto_id = p.producto_id
+    ORDER BY v.fecha_venta DESC;
+END //
+
+DELIMITER ;
+
+Procedimiento 2: Buscar compras de un cliente específico
+
+Este procedimiento recibirá como parámetro el ID del cliente y devolverá únicamente lo que ese cliente ha comprado.
+SQL
+
+DELIMITER //
+
+CREATE PROCEDURE sp_BuscarVentasCliente(IN p_cliente_id INT)
+BEGIN
+    SELECT 
+        v.venta_id,
+        p.nombre_producto AS Producto,
+        v.cantidad AS Cantidad,
+        (v.cantidad * p.precio) AS Total_Pagar,
+        v.fecha_venta AS Fecha
+    FROM ventas v
+    INNER JOIN productos p ON v.producto_id = p.producto_id
+    WHERE v.cliente_id = p_cliente_id;
+END //
+
+DELIMITER ;
+
+🧪 Fase 4: Evaluación y Pruebas
+
+Para dar por aprobado el taller, el alumno debe ejecutar los siguientes comandos de verificación y mostrar los resultados en pantalla:
+SQL
+
+-- 1. Probar el procedimiento global
+CALL sp_HistorialVentas();
+
+-- 2. Probar el procedimiento filtrado (Para el cliente Carlos, ID = 1)
+CALL sp_BuscarVentasCliente(1);
+
+-- 3. Verificar que las actualizaciones se realizaron con éxito
+SELECT * FROM productos;
+SELECT * FROM clientes;
