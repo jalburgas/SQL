@@ -1,0 +1,119 @@
+Para conectar PHP a la base de datos MySQL de forma segura y moderna, la mejor opción es utilizar PDO (PHP Data Objects). PDO permite manejar errores mediante excepciones y es el estándar de la industria para prevenir inyecciones SQL.
+
+Aquí tienes un script limpio y estructurado que puedes dar a tus alumnos para el taller.
+🐘 Script de Conexión (conexion.php)
+
+Este archivo define las credenciales, establece la conexión dentro de un bloque try-catch para capturar cualquier error y configura el juego de caracteres a UTF-8 para evitar problemas con eñes o acentos.
+PHP
+
+<?php
+// 1. Configuración de las credenciales de la base de datos
+$host     = 'localhost';
+$db       = 'taller_ventas';
+$user     = 'root';          // Cambiar por el usuario de tu servidor
+$password = '';              // Cambiar por la contraseña de tu servidor
+$charset  = 'utf8mb4';
+
+// 2. Definición del Data Source Name (DSN)
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+
+// 3. Opciones de configuración para PDO
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Activa el manejo de excepciones para errores
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Devuelve los resultados como arreglos asociativos
+    PDO::ATTR_EMULATE_PREPARES   => false,                  // Desactiva la emulación para usar consultas preparadas reales
+];
+
+try {
+    // 4. Intentar crear la instancia de conexión PDO
+    $pdo = new PDO($dsn, $user, $password, $options);
+    
+    // NOTA: Para producción, este mensaje se debe quitar. 
+    // Solo lo dejamos para que el alumno confirme que funciona.
+    // echo "Conexión exitosa a la base de datos 'taller_ventas'."; 
+
+} catch (\PDOException $e) {
+    // 5. Si algo falla, se captura el error sin exponer credenciales
+    die("Error crítico de conexión: " . $e->getMessage());
+}
+
+📋 Ejemplo de Uso: Consumir el Procedimiento Almacenado
+
+Para que el taller sea interactivo, muestra a los alumnos cómo incluir el archivo de conexión y ejecutar el procedimiento sp_HistorialVentas() que crearon en MySQL para pintar los datos en una tabla HTML básica.
+
+Crea un archivo llamado historial.php en la misma carpeta:
+PHP
+
+<?php
+// Incluir el archivo de conexión
+require_once 'conexion.php';
+
+try {
+    // Preparar y ejecutar la llamada al procedimiento almacenado
+    $stmt = $pdo->prepare("CALL sp_HistorialVentas()");
+    $stmt->execute();
+    
+    // Obtener todos los registros del procedimiento
+    $ventas = $stmt->fetchAll();
+} catch (\PDOException $e) {
+    die("Error al ejecutar el procedimiento: " . $e->getMessage());
+}
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Ventas</title>
+    <style>
+        table { width: 80%; border-collapse: collapse; margin: 20px auto; font-family: Arial, sans-serif; }
+        th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+    <h2 style="text-align: center;">Reporte General de Ventas (Vía Stored Procedure)</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Venta</th>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total a Pagar</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($ventas)): ?>
+                <?php foreach ($ventas as $venta): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($venta['venta_id']) ?></td>
+                        <td><?= htmlspecialchars($venta['Nombre_Cliente']) ?></td>
+                        <td><?= htmlspecialchars($venta['Producto']) ?></td>
+                        <td><?= htmlspecialchars($venta['Cantidad']) ?></td>
+                        <td>$<?= htmlspecialchars(number_format($venta['Precio_Unitario'], 2)) ?></td>
+                        <td>$<?= htmlspecialchars(number_format($venta['Total_Pagar'], 2)) ?></td>
+                        <td><?= htmlspecialchars($venta['Fecha']) ?></td>
+                    </tr>
+                <?php endofeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="7" style="text-align: center;">No se encontraron registros de ventas.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+</body>
+</html>
+
+🧠 Puntos clave para evaluar a los alumnos en PHP:
+
+    Uso de require_once: Garantiza que si el archivo de conexión falla o no existe, el script de visualización se detenga inmediatamente evitando errores en cascada.
+
+    Seguridad con htmlspecialchars(): Es una buena práctica de seguridad informática para limpiar las salidas en el HTML y evitar ataques básicos de XSS (Cross-Site Scripting) si algún dato de la base de datos estuviera alterado.
