@@ -138,6 +138,129 @@ SQL
 
 DELIMITER //
 
+**Los datos han sido generados de forma realista y coherente, asegurando que las fechas de las ventas correspondan al año actual (2026) y que las relaciones de llaves foráneas (cliente_id y producto_id) apunten exactamente a los registros existentes.**
+
+USE taller_ventas;
+
+-- ====================================================================
+-- 1. INSERCIÓN DE 30 REGISTROS EN LA TABLA: clientes
+-- ====================================================================
+INSERT INTO clientes (nombre, correo, telefono) VALUES
+('Alejandro Gómez', 'alejandro.gomez@mail.com', '555-0101'),
+('Sofía Rodríguez', 'sofia.rod@mail.com', '555-0102'),
+('Diego Martínez', 'diego.mtz@mail.com', '555-0103'),
+('Lucía Fernández', 'lucia.f@mail.com', '555-0104'),
+('Carlos Villanueva', 'carlos.v@mail.com', '555-0105'),
+('Valeria López', 'valeria.l@mail.com', '555-0106'),
+('Mateo Gutiérrez', 'mateo.gut@mail.com', '555-0107'),
+('Camila Albright', 'camila.a@mail.com', '555-0108'),
+('Santiago Pérez', 'santiago.p@mail.com', '555-0109'),
+('Isabella Silva', 'isabella.s@mail.com', '555-0110'),
+('Leonardo Torres', 'leonardo.t@mail.com', '555-0111'),
+('Mariana Herrera', 'mariana.h@mail.com', '555-0112'),
+('Sebastián Castro', 'sebastian.c@mail.com', '555-0113'),
+('Elena Delgado', 'elena.d@mail.com', '555-0114'),
+('Nicolás Ortiz', 'nicolas.o@mail.com', '555-0115'),
+('Daniela Flores', 'daniela.f@mail.com', '555-0116'),
+('Gabriel Vargas', 'gabriel.v@mail.com', '555-0117'),
+('Valentina Ríos', 'valentina.r@mail.com', '555-0118'),
+('Felipe Morales', 'felipe.m@mail.com', '555-0119'),
+('Natalia Mendoza', 'natalia.m@mail.com', '555-0120'),
+('Andrés Jiménez', 'andres.j@mail.com', '555-0121'),
+('Paola Ruiz', 'paola.r@mail.com', '555-0122'),
+('Tomás Rojas', 'tomas.r@mail.com', '555-0123'),
+('Fernanda Acosta', 'fernanda.a@mail.com', '555-0124'),
+('Juan Alburgas', 'juan.alburgas@mail.com', '555-0125'),
+('Gabriela Peña', 'gabriela.p@mail.com', '555-0126'),
+('Ricardo Medina', 'ricardo.m@mail.com', '555-0127'),
+('Andrea Miranda', 'andrea.m@mail.com', '555-0128'),
+('Samuel Salazar', 'samuel.s@mail.com', '555-0129'),
+('Vanessa Soto', 'vanessa.s@mail.com', '555-0130');
+
+
+-- ====================================================================
+-- 2. INSERCIÓN DE 30 REGISTROS EN LA TABLA: productos
+-- ====================================================================
+INSERT INTO productos (nombre_producto, precio, stock) VALUES
+('Laptop HP ProBook', 750.00, 15),
+('Mouse Logi Wireless', 25.50, 60),
+('Monitor Asus 24" FHD', 185.00, 20),
+('Teclado Mecánico RGB', 45.00, 35),
+('Disco Duro Externo 1TB', 65.00, 40),
+('Memoria RAM DDR4 16GB', 55.00, 50),
+('Tarjeta de Video RTX 3060', 320.00, 8),
+('Procesador AMD Ryzen 5', 145.00, 12),
+('Placa Madre B550M', 110.00, 10),
+('Fuente de Poder 650W Gold', 85.00, 25),
+('Case Gamer ATX Acrílico', 70.00, 18),
+('Audífonos HyperX Cloud', 90.00, 30),
+('Cámara Web Full HD 1080p', 40.00, 22),
+('Impresora Epson EcoTank', 210.00, 7),
+('Router TP-Link Archer WiFi 6', 75.00, 15),
+('Cable HDMI 2.1 Certificado', 12.00, 100),
+('Silla Ergonómica Oficina', 160.00, 5),
+('Micrófono USB Condensador', 55.00, 14),
+('Hub USB-C de 6 puertos', 30.00, 45),
+('Pendrive Kingston 64GB', 8.50, 120),
+('SSD M.2 NVMe 1TB Kingston', 75.00, 38),
+('Pasta Térmica Arctic MX-4', 9.99, 80),
+('Adaptador Bluetooth 5.0 USB', 11.50, 70),
+('Regleta Supresora de Picos', 18.00, 55),
+('Combo Teclado y Mouse Básico', 20.00, 40),
+('Tableta Digitalizadora Wacom', 85.00, 11),
+('Soporte para Monitor Brazo', 35.00, 20),
+('Cooler Líquido para CPU', 95.00, 9),
+('Batería UPS 500VA', 65.00, 14),
+('Limpiador de Contactos Spray', 7.50, 90);
+
+
+-- ====================================================================
+-- 3. INSERCIÓN DE 30 REGISTROS EN LA TABLA: ventas
+-- ====================================================================
+-- Nota: Los IDs de clientes van del 1 al 30 y de productos del 1 al 30.
+INSERT INTO ventas (cliente_id, producto_id, cantidad, fecha_venta) VALUES
+(1, 1, 1, '2026-06-01'),   -- Alejandro compra una Laptop
+(2, 2, 2, '2026-06-01'),   -- Sofía compra dos mouses
+(3, 5, 1, '2026-06-02'),   -- Diego compra un Disco Duro
+(4, 21, 2, '2026-06-02'),  -- Lucía compra dos SSD M.2
+(5, 3, 1, '2026-06-03'),   -- Carlos compra un Monitor
+(6, 4, 1, '2026-06-04'),   -- Valeria compra un Teclado Mecánico
+(7, 6, 4, '2026-06-05'),   -- Mateo compra 4 memorias RAM
+(8, 20, 5, '2026-06-05'),  -- Camila compra 5 pendrives
+(9, 7, 1, '2026-06-06'),   -- Santiago compra una Tarjeta de Video
+(10, 8, 1, '2026-06-07'),  -- Isabella compra un Procesador AMD
+(11, 9, 1, '2026-06-08'),  -- Leonardo compra una Placa Madre
+(12, 10, 1, '2026-06-08'), -- Mariana compra una Fuente de Poder
+(13, 12, 1, '2026-06-09'), -- Sebastián compra unos Audífonos
+(14, 13, 1, '2026-06-10'), -- Elena compra una Cámara Web
+(15, 16, 3, '2026-06-11'), -- Nicolás compra 3 cables HDMI
+(16, 15, 1, '2026-06-12'), -- Daniela compra un Router
+(17, 19, 2, '2026-06-12'), -- Gabriel compra 2 Hubs USB-C
+(18, 17, 1, '2026-06-13'), -- Valentina compra una Silla Ergonómica
+(19, 22, 1, '2026-06-14'), -- Felipe compra una Pasta Térmica
+(20, 24, 2, '2026-06-14'), -- Natalia compra 2 Regletas
+(21, 25, 1, '2026-06-15'), -- Andrés compra un Combo Básico
+(22, 26, 1, '2026-06-15'), -- Paola compra una Tableta Wacom
+(23, 27, 2, '2026-06-16'), -- Tomás compra 2 Soportes de Monitor
+(24, 30, 3, '2026-06-16'), -- Fernanda compra 3 Limpiadores Spray
+(25, 1, 1, '2026-06-17'),  -- Juan Alburgas compra una Laptop HP
+(25, 2, 1, '2026-06-17'),  -- Juan Alburgas también compra un Mouse
+(26, 11, 1, '2026-06-18'), -- Gabriela compra un Case Gamer
+(27, 18, 1, '2026-06-18'), -- Ricardo compra un Micrófono USB
+(28, 14, 1, '2026-06-19'), -- Andrea compra una Impresora Epson
+(29, 23, 4, '2026-06-19'); -- Samuel compra 4 Adaptadores Bluetooth
+
+💡 Recomendación pedagógica para tus alumnos:
+
+Indícales que después de ejecutar este script prueben los procedimientos almacenados que crearon en la fase anterior usando:
+SQL
+
+-- Esto ahora debería devolver las 30 transacciones bien detalladas
+CALL sp_HistorialVentas();
+
+-- Esto mostrará las 2 compras específicas que hizo el cliente 25 (Juan Alburgas)
+CALL sp_BuscarVentasCliente(25);
+
 CREATE PROCEDURE sp_BuscarVentasCliente(IN p_cliente_id INT)
 BEGIN
     SELECT 
